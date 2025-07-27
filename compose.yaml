@@ -65,7 +65,7 @@ services:
     command:
       - |
         kafka-topics --bootstrap-server kafka:9092 --list
-        kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic transactions
+        kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic ${KAFKA_TOPIC}
 
 volumes:
   postgres-storage:
