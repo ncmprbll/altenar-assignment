@@ -10,6 +10,9 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
+// TransactionInserter is the interface that wraps the Insert method
+//
+// Insert places transaction t in a processing queue
 type TransactionInserter interface {
 	Insert(t *Transaction)
 }

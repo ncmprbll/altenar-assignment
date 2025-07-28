@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -48,6 +49,19 @@ func main() {
 	consumer := NewTransactionConsumer(kafka, processor)
 	defer consumer.Close(mainCtx)
 
+	srv := &http.Server{
+		Addr:         environment["APPLICATION_ADDR"],
+		Handler:      routes(),
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+
+	go func() {
+		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+			panic(err)
+		}
+	}()
+
 	// Graceful shutdown
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
@@ -56,7 +70,13 @@ func main() {
 	gracefulCtx, gracefulCancel := context.WithTimeout(context.Background(), time.Minute)
 	defer gracefulCancel()
 
-	// Firstly, we stop our consumers and workers...
+	// Firstly, we stop our HTTP server...
+	log.Printf("HTTP(s) server (%s) shutdown", srv.Addr)
+	if err := srv.Shutdown(gracefulCtx); err != nil {
+		log.Printf("HTTP(s) server (%s) shutdown failed: %v", srv.Addr)
+	}
+
+	// Secondly, we stop our consumers and workers...
 	log.Println("Transaction consumer shutdown")
 	if err := consumer.Close(gracefulCtx); err != nil {
 		log.Printf("Failed to stop transaction consumer: %v", err)
