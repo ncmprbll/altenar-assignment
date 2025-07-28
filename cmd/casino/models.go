@@ -1,6 +1,8 @@
 package main
 
-import "time"
+import (
+	"time"
+)
 
 type TransactionType string
 
@@ -21,5 +23,5 @@ func (t Transaction) HasAllFields() bool {
 }
 
 func (t Transaction) Valid() bool {
-	return t.HasAllFields() && *t.UserID > 0
+	return t.HasAllFields() && *t.UserID > 0 && *t.Amount > 0
 }

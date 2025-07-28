@@ -2,15 +2,13 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"database/sql"
 	"log"
 	"sync"
-
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type transactionProcessor struct {
-	pgPool         *pgxpool.Pool
+	db             *sql.DB
 	transactionsCh chan *Transaction
 
 	shutdownContext context.Context
@@ -19,7 +17,7 @@ type transactionProcessor struct {
 }
 
 // Initialize a new transaction processor
-func NewTransactionProcessor(pgPool *pgxpool.Pool, jobsSize, workersCount int) *transactionProcessor {
+func NewTransactionProcessor(db *sql.DB, jobsSize, workersCount int) *transactionProcessor {
 	if jobsSize < 0 {
 		panic("jobsSize cannot be negative")
 	}
@@ -31,7 +29,7 @@ func NewTransactionProcessor(pgPool *pgxpool.Pool, jobsSize, workersCount int) *
 	ctx, cancel := context.WithCancel(context.Background())
 
 	processor := &transactionProcessor{
-		pgPool:         pgPool,
+		db:             db,
 		transactionsCh: make(chan *Transaction, jobsSize),
 
 		shutdownContext: ctx,
@@ -78,9 +76,7 @@ func (p *transactionProcessor) processTransactions() {
 	for {
 		select {
 		case t := <-p.transactionsCh:
-			// TODO: Acquire a dedicated connection for each worker?
-			if _, err := p.pgPool.Exec(
-				context.Background(),
+			if _, err := p.db.Exec(
 				"INSERT INTO transactions (user_id, transaction_type, amount, timestamp) VALUES ($1, $2, $3, $4);",
 				t.UserID,
 				t.TransactionType,
@@ -89,7 +85,6 @@ func (p *transactionProcessor) processTransactions() {
 			); err != nil {
 				log.Printf("Failed to save transaction in the database: %v", err)
 			}
-			fmt.Printf("%+v\n", t)
 		case <-p.shutdownContext.Done():
 			return
 		}

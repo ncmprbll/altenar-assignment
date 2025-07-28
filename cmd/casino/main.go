@@ -11,6 +11,7 @@ import (
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/joho/godotenv"
 )
 
@@ -29,6 +30,11 @@ func main() {
 	}
 	defer pgPool.Close()
 
+	// Do not depend on concrete implementation
+	db := stdlib.OpenDBFromPool(pgPool)
+	// Does not close underlying [*pgxpool.Pool]
+	defer db.Close()
+
 	kafka, err := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers": environment["KAFKA_BOOTSTRAP_SERVERS"],
 		"group.id":          environment["KAFKA_CONSUMER_GROUP"],
@@ -43,15 +49,21 @@ func main() {
 		panic(err)
 	}
 
-	processor := NewTransactionProcessor(pgPool, 8, 1)
+	// TODO: Acquire a dedicated connection for this transactions processor?
+	processor := NewTransactionProcessor(db, 8, 1)
 	defer processor.Close(mainCtx)
 
 	consumer := NewTransactionConsumer(kafka, processor)
 	defer consumer.Close(mainCtx)
 
+	app := &app{
+		db:    db,
+		kafka: kafka,
+	}
+
 	srv := &http.Server{
 		Addr:         environment["APPLICATION_ADDR"],
-		Handler:      routes(),
+		Handler:      app.routes(),
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
@@ -94,5 +106,6 @@ func main() {
 	kafka.Close()
 
 	log.Println("Postgres pool shutdown")
+	db.Close()
 	pgPool.Close()
 }

@@ -17,6 +17,10 @@ type TransactionInserter interface {
 	Insert(t *Transaction)
 }
 
+type TransactionReader interface {
+	Insert(t *Transaction)
+}
+
 type transactionConsumer struct {
 	consumer *kafka.Consumer
 	inserter TransactionInserter
