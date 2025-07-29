@@ -7,8 +7,9 @@ import (
 type TransactionType string
 
 const (
-	TransactionBet TransactionType = "bet"
-	TransactionWin TransactionType = "win"
+	TransactionTypeBet TransactionType = "bet"
+	TransactionTypein  TransactionType = "win"
+	TransactionTypeAll TransactionType = "all"
 )
 
 type Transaction struct {

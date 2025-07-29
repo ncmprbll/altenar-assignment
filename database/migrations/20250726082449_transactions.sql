@@ -15,6 +15,8 @@ CREATE TABLE transactions (
     timestamp TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
+CREATE INDEX transactions_user_id_and_transaction_type_idx ON transactions (user_id, transaction_type);
+
 COMMIT;
 -- +goose StatementEnd
 
