@@ -7,7 +7,7 @@ import (
 )
 
 // TODO: Transform this into a more elaborate query builder, surely
-func buildFindTransactionsQueryWithLogicalAnds(userID string, typ TransactionType) (string, []any) {
+func (app *App) BuildFindTransactionsQueryWithLogicalAnds(userID string, typ TransactionType) (string, []any) {
 	var (
 		statement  strings.Builder
 		positional = '1'
@@ -47,16 +47,16 @@ func buildFindTransactionsQueryWithLogicalAnds(userID string, typ TransactionTyp
 	return statement.String(), arguments
 }
 
-func (app *app) findTransactionsFilterByType(ctx context.Context, typ TransactionType) ([]*Transaction, error) {
-	return app.findTransactionsByUserID(ctx, "", typ)
+func (app *App) FindTransactionsFilterByType(ctx context.Context, typ TransactionType) ([]*Transaction, error) {
+	return app.FindTransactionsByUserID(ctx, "", typ)
 }
 
-func (app *app) findTransactionsByUserID(ctx context.Context, userID string, typ TransactionType) ([]*Transaction, error) {
+func (app *App) FindTransactionsByUserID(ctx context.Context, userID string, typ TransactionType) ([]*Transaction, error) {
 	if typ == TransactionTypeAll {
 		typ = ""
 	}
 
-	stmt, arguments := buildFindTransactionsQueryWithLogicalAnds(userID, typ)
+	stmt, arguments := app.BuildFindTransactionsQueryWithLogicalAnds(userID, typ)
 
 	transactions := []*Transaction{}
 

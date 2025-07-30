@@ -8,7 +8,7 @@ type TransactionType string
 
 const (
 	TransactionTypeBet TransactionType = "bet"
-	TransactionTypein  TransactionType = "win"
+	TransactionTypeWin TransactionType = "win"
 	TransactionTypeAll TransactionType = "all"
 )
 
@@ -17,6 +17,15 @@ type Transaction struct {
 	TransactionType *TransactionType `json:"transaction_type"`
 	Amount          *int             `json:"amount"`
 	Timestamp       *time.Time       `json:"timestamp"`
+}
+
+func NewTransaction(userID int, transactionType TransactionType, amount int, timestamp time.Time) Transaction {
+	return Transaction{
+		UserID:          &userID,
+		TransactionType: &transactionType,
+		Amount:          &amount,
+		Timestamp:       &timestamp,
+	}
 }
 
 func (t Transaction) HasAllFields() bool {

@@ -56,14 +56,11 @@ func main() {
 	consumer := NewTransactionConsumer(kafka, processor)
 	defer consumer.Close(mainCtx)
 
-	app := &app{
-		db:    db,
-		kafka: kafka,
-	}
+	app := NewApp(db, kafka)
 
 	srv := &http.Server{
 		Addr:         environment["APPLICATION_ADDR"],
-		Handler:      app.routes(),
+		Handler:      app.Routes(),
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
@@ -85,7 +82,7 @@ func main() {
 	// Firstly, we stop our HTTP server...
 	log.Printf("HTTP(s) server (%s) shutdown", srv.Addr)
 	if err := srv.Shutdown(gracefulCtx); err != nil {
-		log.Printf("HTTP(s) server (%s) shutdown failed: %v", srv.Addr)
+		log.Printf("HTTP(s) server (%s) shutdown failed: %v", srv.Addr, err)
 	}
 
 	// Secondly, we stop our consumers and workers...
