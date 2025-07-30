@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"log"
 	"sync"
 )
@@ -17,13 +18,13 @@ type transactionProcessor struct {
 }
 
 // Initialize a new transaction processor
-func NewTransactionProcessor(db *sql.DB, jobsSize, workersCount int) *transactionProcessor {
+func NewTransactionProcessor(db *sql.DB, jobsSize, workersCount int) (*transactionProcessor, error) {
 	if jobsSize < 0 {
-		panic("jobsSize cannot be negative")
+		return nil, errors.New("jobsSize cannot be negative")
 	}
 
 	if workersCount <= 0 {
-		panic("workersCount cannot be negative or zero")
+		return nil, errors.New("workersCount cannot be negative or zero")
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -41,7 +42,7 @@ func NewTransactionProcessor(db *sql.DB, jobsSize, workersCount int) *transactio
 		go processor.processTransactions()
 	}
 
-	return processor
+	return processor, nil
 }
 
 // Tell current workers to stop and wait for them to finish

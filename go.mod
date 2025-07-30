@@ -3,6 +3,7 @@ module github.com/ncmprbll/altenar-assignment
 go 1.24.0
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/confluentinc/confluent-kafka-go/v2 v2.11.0
 	github.com/go-chi/chi/v5 v5.2.2
 	github.com/jackc/pgx/v5 v5.7.5

@@ -50,10 +50,16 @@ func main() {
 	}
 
 	// TODO: Acquire a dedicated connection for this transactions processor?
-	processor := NewTransactionProcessor(db, 8, 1)
+	processor, err := NewTransactionProcessor(db, 8, 1)
+	if err != nil {
+		panic(err)
+	}
 	defer processor.Close(mainCtx)
 
-	consumer := NewTransactionConsumer(kafka, processor)
+	consumer, err := NewTransactionConsumer(kafka, processor)
+	if err != nil {
+		panic(err)
+	}
 	defer consumer.Close(mainCtx)
 
 	app := NewApp(db, kafka)

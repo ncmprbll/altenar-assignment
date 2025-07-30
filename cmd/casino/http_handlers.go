@@ -25,7 +25,7 @@ func (app *App) GetTransactions(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if json.NewEncoder(w).Encode(transactions); err != nil {
+	if err := json.NewEncoder(w).Encode(transactions); err != nil {
 		internalServerError(w, err)
 	}
 }
@@ -42,7 +42,7 @@ func (app *App) GetUserTransactions(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if json.NewEncoder(w).Encode(transactions); err != nil {
+	if err := json.NewEncoder(w).Encode(transactions); err != nil {
 		internalServerError(w, err)
 	}
 }

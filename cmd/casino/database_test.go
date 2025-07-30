@@ -115,7 +115,7 @@ var queryTests = []struct {
 	},
 }
 
-func TestBuildFindTransactionsQueryWithLogicalAnds(t *testing.T) {
+func TestMethodBuildFindTransactionsQueryWithLogicalAnds(t *testing.T) {
 	var re = regexp.MustCompile(`[\n\t ]`)
 	for i, tt := range queryTests {
 		t.Run(fmt.Sprintf("TestCase_%02d", i), func(t *testing.T) {
@@ -139,4 +139,13 @@ func TestBuildFindTransactionsQueryWithLogicalAnds(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestMethodFindTransactionsByUserID(t *testing.T) {
+	t.Run(fmt.Sprintf("TestCase_%02d", 0), func(t *testing.T) {
+		// _, err := app.FindTransactionsByUserID(t.Context(), "1", casino.TransactionTypeBet)
+		// if err != nil {
+		// 	t.Errorf("Failed to find transactions by user id: %v", err)
+		// }
+	})
 }

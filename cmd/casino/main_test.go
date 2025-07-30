@@ -1,53 +1,65 @@
 package main_test
 
 import (
-	"context"
+	"errors"
+	"regexp"
 	"testing"
+	"time"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/jackc/pgx/v5/stdlib"
-	"github.com/joho/godotenv"
 	casino "github.com/ncmprbll/altenar-assignment/cmd/casino"
 )
 
 var (
-	app *casino.App
+	app       *casino.App
+	mock      sqlmock.Sqlmock
+	mockKafka *mockKafkaConsumerImpl
 )
 
+type mockKafkaConsumerImpl struct {
+	messages chan []byte
+}
+
+func (m *mockKafkaConsumerImpl) ReadMessage(timeout time.Duration) (*kafka.Message, error) {
+	for {
+		select {
+		case <-time.After(timeout):
+			return nil, kafka.NewError(kafka.ErrTimedOut, kafka.ErrTimedOut.String(), false)
+		case msg := <-m.messages:
+			return &kafka.Message{
+				Value: msg,
+			}, nil
+		}
+	}
+}
+
+func (m *mockKafkaConsumerImpl) SendMessage(msg []byte) {
+	m.messages <- msg
+}
+
 func TestMain(m *testing.M) {
-	mainCtx, mainCancel := context.WithCancel(context.Background())
-	defer mainCancel()
-
-	environment, err := godotenv.Read("../../.env")
+	re := regexp.MustCompile(`[\n\t ]`)
+	db, sqlMock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherFunc(func(expected, actual string) error {
+		if expected == "skip" {
+			return nil
+		}
+		if re.ReplaceAllString(actual, "") == re.ReplaceAllString(expected, "") {
+			return nil
+		}
+		return errors.New("sql mismatch")
+	})))
 	if err != nil {
 		panic(err)
 	}
-
-	pgPool, err := pgxpool.New(mainCtx, environment["POSTGRES_DSN"])
-	if err != nil {
-		panic(err)
-	}
-	defer pgPool.Close()
-
-	db := stdlib.OpenDBFromPool(pgPool)
 	defer db.Close()
 
-	kafka, err := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers": environment["KAFKA_BOOTSTRAP_SERVERS"],
-		"group.id":          environment["KAFKA_CONSUMER_GROUP"],
-		"auto.offset.reset": "earliest",
-	})
-	if err != nil {
-		panic(err)
-	}
-	defer kafka.Close()
-
-	if err := kafka.SubscribeTopics([]string{environment["KAFKA_TOPIC"]}, nil); err != nil {
-		panic(err)
+	mock = sqlMock
+	mockKafka = &mockKafkaConsumerImpl{
+		messages: make(chan []byte),
 	}
 
-	app = casino.NewApp(db, kafka)
+	app = casino.NewApp(db, mockKafka)
 
 	m.Run() // code := m.Run()
 

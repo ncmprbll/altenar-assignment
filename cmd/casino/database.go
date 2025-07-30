@@ -60,7 +60,7 @@ func (app *App) FindTransactionsByUserID(ctx context.Context, userID string, typ
 
 	transactions := []*Transaction{}
 
-	rows, err := app.db.Query(
+	rows, err := app.DB.Query(
 		stmt,
 		arguments...,
 	)

@@ -2,18 +2,16 @@ package main
 
 import (
 	"database/sql"
-
-	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
 type App struct {
-	db    *sql.DB
-	kafka *kafka.Consumer
+	DB    *sql.DB
+	Kafka KafkaConsumerWrapper
 }
 
-func NewApp(db *sql.DB, kafka *kafka.Consumer) *App {
+func NewApp(db *sql.DB, kafka KafkaConsumerWrapper) *App {
 	return &App{
-		db:    db,
-		kafka: kafka,
+		DB:    db,
+		Kafka: kafka,
 	}
 }

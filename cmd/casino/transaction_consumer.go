@@ -17,12 +17,12 @@ type TransactionInserter interface {
 	Insert(t *Transaction)
 }
 
-type TransactionReader interface {
-	Insert(t *Transaction)
+type KafkaConsumerWrapper interface {
+	ReadMessage(time.Duration) (*kafka.Message, error)
 }
 
 type transactionConsumer struct {
-	consumer *kafka.Consumer
+	consumer KafkaConsumerWrapper
 	inserter TransactionInserter
 
 	shutdownContext context.Context
@@ -31,7 +31,7 @@ type transactionConsumer struct {
 }
 
 // Initialize a new transaction consumer
-func NewTransactionConsumer(consumer *kafka.Consumer, inserter TransactionInserter) *transactionConsumer {
+func NewTransactionConsumer(consumer KafkaConsumerWrapper, inserter TransactionInserter) (*transactionConsumer, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	c := &transactionConsumer{
@@ -45,7 +45,7 @@ func NewTransactionConsumer(consumer *kafka.Consumer, inserter TransactionInsert
 	c.wg.Add(1)
 	go c.consumeTransactions()
 
-	return c
+	return c, nil
 }
 
 // Tell current workers to stop and wait for them to finish
